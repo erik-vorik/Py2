@@ -24,7 +24,7 @@ def is_grid_valid(s):
 
 
 def input_grid_size():
-    grid_size = input('Type size of grid in the format x,y:')
+    grid_size =input('Type size of grid in the format x,y:')
 
     # print(grid_size)
     while not is_grid_valid(grid_size):
@@ -65,7 +65,7 @@ def is_coord_num_valid(coord_num_str, x_grid, y_grid):
     return False
 
 
-def initiate_grid(size):
+def input_grid(size):
     """creates the initial grid and setts the values of each cell from the user's input"""
     grid_fill = list()
     cols, rows = size[1], size[0]
@@ -77,7 +77,7 @@ def initiate_grid(size):
     return grid_fill
 
 
-def coord_cell_gen(size):
+def input_coord_cell_gen(size):
     """takes the user input for coordinates of a cell and number of generation"""
     coord_num = input('Coordinates of a cell and a number of generation -->')
     cols, rows = size[1], size[0]
@@ -98,21 +98,20 @@ def grid_vizualize(matrix):
     # print(matrix)
 
 
-def next_gen(old_matrix, size):
-    cols, rows = size[0], size[1]
+def next_gen(old_matrix):
     nextmatrix = list()  # is it possible rigid size --- DONE it using list of list of Nones
+    rows = len(old_matrix)
     for i in range(rows):
         temp_cols = list()
+        cols = len(old_matrix[i])
         for k in range(cols):
             temp_cols.append(None)
         nextmatrix.append(temp_cols)
-    num_rows = size[1]
-    num_cols = size[0]
-    for row in range(num_rows):
-        # temp_lst = list()
-        for col in range(num_cols):
+
+    for row in range(rows):
+        cols = len(old_matrix[row])
+        for col in range(cols):
             cell_val = old_matrix[row][col]
-            # print(f'old matrix checked @ row={row} col={col}')
             greens_count = count_green_neighbors(row, col, old_matrix, size)
             if cell_val == 1 and greens_count in [0, 1, 4, 5, 7, 8]:  # change in next generation     1 -- > 0
                 nextmatrix[row][col] = 0
@@ -120,6 +119,7 @@ def next_gen(old_matrix, size):
                 nextmatrix[row][col] = 1
             else:
                 nextmatrix[row][col] = cell_val  # stay unchanged in next generation 0 -- > 0 & 1 -- > 1
+
     return nextmatrix
 
 
@@ -130,14 +130,14 @@ def count_green_neighbors(row_center_cell, col_center_cell, curr_mat, size):
     greens_count = 0
     # the loop roams one cell away to check neighboring cells
     # and traverses this domain row by row left to right
-    for i in range(3):
-        if row_center_cell + i - 1 < 0 or row_center_cell + i - 1 > size[1] - 1:
-            continue
+    for i in range(3):  # for row in [row_center_cell-1, row_center_cell, row_center_cell+1]
         roam_cell_row = row_center_cell + i - 1
+        if roam_cell_row < 0 or roam_cell_row > size[1] - 1:
+            continue
         for k in range(3):
-            if col_center_cell + k - 1 < 0 or col_center_cell + k - 1 > size[0] - 1:
-                continue
             roam_cell_col = col_center_cell + k - 1
+            if roam_cell_col < 0 or roam_cell_col > size[0] - 1:
+                continue
             if roam_cell_col == col_center_cell and roam_cell_row == row_center_cell:
                 continue
 
@@ -149,9 +149,10 @@ def count_green_neighbors(row_center_cell, col_center_cell, curr_mat, size):
 
 
 def is_cell_green(matrix, r, c):
-    if matrix[r][c] == 1:
-        return True
-    return False
+    return matrix[r][c] == 1
+    # if matrix[r][c] == 1:
+    #     return True
+    # return False
 
 
 def counts_cell_in_green(matrix, gen_nums, r, c, size):
@@ -161,7 +162,7 @@ def counts_cell_in_green(matrix, gen_nums, r, c, size):
         times_cell_is_green += 1
     print(f'Generation 0\ncell @ row:{r} col:{c} -- > times green:{times_cell_is_green}')
     for gen in range(1, gen_nums + 1):
-        new_matrix = next_gen(old_matrix, size)
+        new_matrix = next_gen(old_matrix)
         if is_cell_green(new_matrix, r, c):
             times_cell_is_green += 1
         print(f'Generation {gen}\ncell @ row:{r} col:{c} -- > times green:{times_cell_is_green}')
@@ -171,16 +172,11 @@ def counts_cell_in_green(matrix, gen_nums, r, c, size):
 
 
 size = input_grid_size()
-start_grid = initiate_grid(size=size)
-# start_grid = [[1, 0, 0, 1],  # for testing purposes
-#               [0, 0, 0, 1],
-#               [1, 1, 1, 0],
-#               [0, 0, 1, 0]]
-c = coord_cell_gen(size=size)
-# c = [1, 1, 4]  # for testing purposes
+start_grid = input_grid(size)
+c = input_coord_cell_gen(size)
 cell_to_check = (c[1], c[0])  # row , col
 final_gen_num = c[2]
 
 print('START the GAME')
-occur_cell_in_green = counts_cell_in_green(start_grid,final_gen_num,cell_to_check[0],cell_to_check[1],size)
+occur_cell_in_green = counts_cell_in_green(start_grid, final_gen_num, cell_to_check[0], cell_to_check[1], size)
 print(f'Result: {occur_cell_in_green}')
