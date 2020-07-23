@@ -8,7 +8,7 @@ def is_grid_valid(s):
     if match is None:
         print('wrong format')
         return False
-    print(match.groups())
+    # print(match.groups())
 
     try:
         a = int(match.group(2))
@@ -26,18 +26,19 @@ def is_grid_valid(s):
 def input_grid_size():
     grid_size = input('Type size of grid in the format x,y:')
 
-    print(grid_size)
+    # print(grid_size)
     while not is_grid_valid(grid_size):
         print('in the while loop')
         grid_size = input('Type x,y (size of grid):')
         if is_grid_valid(grid_size):
             break
 
-    size_lst = grid_size.split(sep=',')
-    cols = int(size_lst[0])
-    rows = int(size_lst[1])
-    print(f'x={cols} y={rows}')
-    return rows, cols
+    r_c_lst = grid_size.split(sep=',')
+    c = int(r_c_lst[0])
+    r = int(r_c_lst[1])
+    # print(f'cols={c} rows={r}')
+    return r, c
+
 
 # initial values of the cells in the grid
 def is_row_valid(row_str, n):
@@ -59,13 +60,15 @@ def is_coord_num_valid(coord_num_str, x_grid, y_grid):
     y_cell = int(match.group(3))
     if 0 <= x_cell <= x_grid - 1 and \
             0 <= y_cell <= y_grid - 1:
-        print(match)
+        # print(match)
         return True
     return False
 
 
-def initiate_grid():
+def initiate_grid(size):
+    """creates the initial grid and setts the values of each cell from the user's input"""
     grid_fill = list()
+    cols, rows = size[1], size[0]
     for i in range(rows):
         string_input_row = input(f'row {i} --> ')
         while not is_row_valid(string_input_row, cols):
@@ -74,35 +77,110 @@ def initiate_grid():
     return grid_fill
 
 
-def coord_cell_gen():
+def coord_cell_gen(size):
+    """takes the user input for coordinates of a cell and number of generation"""
     coord_num = input('Coordinates of a cell and a number of generation -->')
+    cols, rows = size[1], size[0]
     while not is_coord_num_valid(coord_num, cols, rows):
         coord_num = input('Enter in format x1,y1,num_of_gen -->')
-    print(coord_num, type(coord_num))
+    # print(coord_num, type(coord_num))
     x_c, y_c, n_gen = [int(x) for x in coord_num.split(',')]
     return x_c, y_c, n_gen
 
 
 # visualize the grid with values
-def grid_vizualize():
-    for i in range(len(grid)):
-        for k in range(len(grid[i])):
-            print(grid[i][k], end='')
+def grid_vizualize(matrix):
+    """vizualizes the initial grid /for testing purposes/"""
+    for i in range(len(matrix)):
+        for k in range(len(matrix[i])):
+            print(matrix[i][k], end='')
         print()
-    print(grid)
+    # print(matrix)
 
 
-def next_gen(TODO):
-    result = list()  # is it possible rigid size
+def next_gen(old_matrix, size):
+    cols, rows = size[0], size[1]
+    nextmatrix = list()  # is it possible rigid size --- DONE it using list of list of Nones
+    for i in range(rows):
+        temp_cols = list()
+        for k in range(cols):
+            temp_cols.append(None)
+        nextmatrix.append(temp_cols)
+    num_rows = size[1]
+    num_cols = size[0]
+    for row in range(num_rows):
+        # temp_lst = list()
+        for col in range(num_cols):
+            cell_val = old_matrix[row][col]
+            # print(f'old matrix checked @ row={row} col={col}')
+            greens_count = count_green_neighbors(row, col, old_matrix, size)
+            if cell_val == 1 and greens_count in [0, 1, 4, 5, 7, 8]:  # change in next generation     1 -- > 0
+                nextmatrix[row][col] = 0
+            elif cell_val == 0 and greens_count in [3, 6]:  # change in next generation     0 -- > 1
+                nextmatrix[row][col] = 1
+            else:
+                nextmatrix[row][col] = cell_val  # stay unchanged in next generation 0 -- > 0 & 1 -- > 1
+    return nextmatrix
 
-    def count_green_neighbors(r, c):
-        pass
+
+def count_green_neighbors(row_center_cell, col_center_cell, curr_mat, size):
+    # point the cell in question about its neighbors
+    cell_center = curr_mat[row_center_cell][col_center_cell]
+
+    greens_count = 0
+    # the loop roams one cell away to check neighboring cells
+    # and traverses this domain row by row left to right
+    for i in range(3):
+        if row_center_cell + i - 1 < 0 or row_center_cell + i - 1 > size[1] - 1:
+            continue
+        roam_cell_row = row_center_cell + i - 1
+        for k in range(3):
+            if col_center_cell + k - 1 < 0 or col_center_cell + k - 1 > size[0] - 1:
+                continue
+            roam_cell_col = col_center_cell + k - 1
+            if roam_cell_col == col_center_cell and roam_cell_row == row_center_cell:
+                continue
+
+            roam_cell = curr_mat[roam_cell_row][roam_cell_col]
+
+            if roam_cell == 1:
+                greens_count += 1
+    return greens_count
+
+
+def is_cell_green(matrix, r, c):
+    if matrix[r][c] == 1:
+        return True
+    return False
+
+
+def counts_cell_in_green(matrix, gen_nums, r, c, size):
+    times_cell_is_green = 0
+    old_matrix = matrix
+    if is_cell_green(old_matrix, r, c):
+        times_cell_is_green += 1
+    print(f'Generation 0\ncell @ row:{r} col:{c} -- > times green:{times_cell_is_green}')
+    for gen in range(1, gen_nums + 1):
+        new_matrix = next_gen(old_matrix, size)
+        if is_cell_green(new_matrix, r, c):
+            times_cell_is_green += 1
+        print(f'Generation {gen}\ncell @ row:{r} col:{c} -- > times green:{times_cell_is_green}')
+        grid_vizualize(new_matrix)
+        old_matrix = new_matrix
+    return times_cell_is_green
 
 
 size = input_grid_size()
-cols, rows = size[1], size[0]
-grid = initiate_grid()
-c = coord_cell_gen()
-cell_to_check = (c[0], c[1])
-num_gen = c[2]
-grid_vizualize()
+start_grid = initiate_grid(size=size)
+# start_grid = [[1, 0, 0, 1],  # for testing purposes
+#               [0, 0, 0, 1],
+#               [1, 1, 1, 0],
+#               [0, 0, 1, 0]]
+c = coord_cell_gen(size=size)
+# c = [1, 1, 4]  # for testing purposes
+cell_to_check = (c[1], c[0])  # row , col
+final_gen_num = c[2]
+
+print('START the GAME')
+occur_cell_in_green = counts_cell_in_green(start_grid,final_gen_num,cell_to_check[0],cell_to_check[1],size)
+print(f'Result: {occur_cell_in_green}')
