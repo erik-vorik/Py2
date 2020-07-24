@@ -8,7 +8,6 @@ def is_grid_valid(s):
     if match is None:
         print('wrong format')
         return False
-    # print(match.groups())
 
     try:
         a = int(match.group(2))
@@ -25,8 +24,6 @@ def is_grid_valid(s):
 
 def input_grid_size():
     grid_size = input('Type size of grid in the format x,y:')
-
-    # print(grid_size)
     while not is_grid_valid(grid_size):
         print('in the while loop')
         grid_size = input('Type x,y (size of grid):')
@@ -36,7 +33,6 @@ def input_grid_size():
     r_c_lst = grid_size.split(sep=',')
     c = int(r_c_lst[0])
     r = int(r_c_lst[1])
-    # print(f'cols={c} rows={r}')
     return r, c
 
 
@@ -45,9 +41,7 @@ def is_row_valid(row_str, n):
     pattern = r"\b([0-1]{%d})\b" % n
     match = re.search(pattern, row_str)
     if match is None:
-        # print(match)
         return False
-    # print(match.group(0))
     return True
 
 
@@ -60,7 +54,6 @@ def is_coord_num_valid(coord_num_str, x_grid, y_grid):
     y_cell = int(match.group(3))
     if 0 <= x_cell <= x_grid - 1 and \
             0 <= y_cell <= y_grid - 1:
-        # print(match)
         return True
     return False
 
@@ -83,49 +76,20 @@ def input_coord_cell_gen(size):
     cols, rows = size[1], size[0]
     while not is_coord_num_valid(coord_num, cols, rows):
         coord_num = input('Enter in format x1,y1,num_of_gen -->')
-    # print(coord_num, type(coord_num))
     x_c, y_c, n_gen = [int(x) for x in coord_num.split(',')]
     return x_c, y_c, n_gen
 
 
-# visualize the grid with values
-def grid_vizualize(matrix):
-    """vizualizes grid /for testing purposes/"""
-    for i in range(len(matrix)):
-        for k in range(len(matrix[i])):
-            print(matrix[i][k], end='')
-        print()
 
-def next_gen(gen_obj):
-    nextmatrix = list()  # is it possible rigid size --- DONE it using list of list of Nones
-    rows = len(gen_obj.grid)
-    for i in range(rows):
-        temp_cols = list()
-        cols = len(gen_obj.grid[i])
-        for k in range(cols):
-            temp_cols.append(None)
-        nextmatrix.append(temp_cols)
 
-    for row in range(rows):
-        cols = len(gen_obj.grid[row])
-        for col in range(cols):
-            cell_val = gen_obj.grid[row][col]
-            greens_count = gen_obj.count_green_neighbors(row_center_cell=row, col_center_cell=col)
-            if cell_val == 1 and greens_count in [0, 1, 4, 5, 7, 8]:  # change in next generation     1 -- > 0
-                nextmatrix[row][col] = 0
-            elif cell_val == 0 and greens_count in [3, 6]:  # change in next generation     0 -- > 1
-                nextmatrix[row][col] = 1
-            else:
-                nextmatrix[row][col] = cell_val  # stay unchanged in next generation 0 -- > 0 & 1 -- > 1
 
-    return nextmatrix
 
 
 def is_cell_green(matrix, r, c):
     return matrix[r][c] == 1
-    # if matrix[r][c] == 1:
-    #     return True
-    # return False
+
+
+
 
 
 def counts_cell_in_green(gen_obj, input_coordCell_genNum):
@@ -136,13 +100,13 @@ def counts_cell_in_green(gen_obj, input_coordCell_genNum):
     times_cell_is_green = 0
     if is_cell_green(gen_obj.grid, r, c):
         times_cell_is_green += 1
-    # print(f'Generation 0\ncell @ row:{r} col:{c} -- > times green:{times_cell_is_green}')
+    print(f'Generation 0\ncell @ row:{r} col:{c} -- > times green:{times_cell_is_green}')
     for gen in range(1, gen_num + 1):
-        gen_obj.grid = next_gen(gen_obj)
+        gen_obj.create_next_generation()
         if is_cell_green(gen_obj.grid, r, c):
             times_cell_is_green += 1
-        # print(f'Generation {gen}\ncell @ row:{r} col:{c} -- > times green:{times_cell_is_green}')
-        # grid_vizualize(gen_obj.grid)
+        print(f'Generation {gen}\ncell @ row:{r} col:{c} -- > times green:{times_cell_is_green}')
+        gen_obj.grid_vizualize()
     return times_cell_is_green
 
 
@@ -174,7 +138,34 @@ class Generation:
                 if roam_cell == 1:
                     greens_count += 1
         return greens_count
+    def create_next_generation(self):
+        nextmatrix = list()  # is it possible rigid size --- DONE it using list of list of Nones
+        rows = len(self.grid)
+        for i in range(rows):
+            temp_cols = list()
+            cols = len(self.grid[i])
+            for k in range(cols):
+                temp_cols.append(None)
+            nextmatrix.append(temp_cols)
 
+        for row in range(rows):
+            cols = len(self.grid[row])
+            for col in range(cols):
+                cell_val = self.grid[row][col]
+                greens_count = self.count_green_neighbors(row_center_cell=row, col_center_cell=col)
+                if cell_val == 1 and greens_count in [0, 1, 4, 5, 7, 8]:  # change in next generation     1 -- > 0
+                    nextmatrix[row][col] = 0
+                elif cell_val == 0 and greens_count in [3, 6]:  # change in next generation     0 -- > 1
+                    nextmatrix[row][col] = 1
+                else:
+                    nextmatrix[row][col] = cell_val  # stay unchanged in next generation 0 -- > 0 & 1 -- > 1
+        self.grid = nextmatrix
+    def grid_vizualize(self):
+        """vizualizes grid with its values /for testing purposes/"""
+        for i in range(len(self.grid)):
+            for k in range(len(self.grid[i])):
+                print(self.grid[i][k], end='')
+            print()
 
 size = input_grid_size()
 gen_zero = Generation(input_grid(size))
